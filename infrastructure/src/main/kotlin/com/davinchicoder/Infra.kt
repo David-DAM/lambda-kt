@@ -2,14 +2,10 @@ package com.davinchicoder
 
 import software.amazon.awscdk.App
 
-class Infra {
+fun main() {
+    val app = App()
 
-    fun main() {
-        val app = App()
+    InfraStack(app, "InfraStack")
 
-        InfraStack(app, "InfraStack")
-
-        app.synth()
-    }
-
+    app.synth()
 }
