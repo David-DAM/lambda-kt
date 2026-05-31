@@ -31,7 +31,7 @@ class InfraStack(
         Function.Builder.create(this, "Lambda")
             .role(lambdaRole)
             .runtime(Runtime.JAVA_21)
-            .handler("com.davinchicoder.Handler")
+            .handler("com.davinchicoder.Handler::handleRequest")
             .code(Code.fromAsset("../build/libs/lambda.zip"))
             .memorySize(512)
             .timeout(Duration.seconds(10))
