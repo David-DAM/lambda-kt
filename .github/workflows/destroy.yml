@@ -1,7 +1,11 @@
-name: Deploy CDK
+name: Destroy CDK
 
 on:
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   deploy:
