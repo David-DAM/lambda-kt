@@ -42,6 +42,9 @@ jobs:
       - name: Build project and zip lambda
         run: ./gradlew clean lambdaZip
 
+      - name: Verify lambda zip generation
+        run: ls -la build/libs/
+
       - name: CDK Bootstrap
         run: cdk bootstrap
         working-directory: infrastructure
