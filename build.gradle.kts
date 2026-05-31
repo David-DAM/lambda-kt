@@ -37,13 +37,22 @@ tasks.build {
 }
 
 tasks.register<Zip>("lambdaZip") {
-    description = "Generates a zip file containing the lambda function and its dependencies"
-    from(tasks.jar)
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    description = "Generates lambda zip"
+
+    from(sourceSets.main.get().output)
+
+    from(configurations.runtimeClasspath.get().map {
+        if (it.isDirectory) it else zipTree(it)
+    })
 
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
-    exclude("META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "META-INF/MANIFEST.MF")
+    exclude(
+        "META-INF/*.SF",
+        "META-INF/*.DSA",
+        "META-INF/*.RSA",
+        "META-INF/MANIFEST.MF"
+    )
 
     archiveFileName.set("lambda.zip")
     destinationDirectory.set(layout.buildDirectory.dir("libs"))
