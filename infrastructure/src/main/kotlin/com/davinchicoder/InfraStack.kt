@@ -28,13 +28,11 @@ class InfraStack(
             )
             .build()
 
-        val root = System.getenv("GITHUB_WORKSPACE")
-
         Function.Builder.create(this, "Lambda")
             .role(lambdaRole)
             .runtime(Runtime.JAVA_21)
             .handler("com.davinchicoder.Handler")
-            .code(Code.fromAsset("$root/lambda-kt/build/libs/lambda.zip"))
+            .code(Code.fromAsset("../../build/libs/lambda.zip"))
             .memorySize(512)
             .timeout(Duration.seconds(10))
             .build()
