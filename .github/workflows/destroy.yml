@@ -36,6 +36,9 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-sam-role
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Setup permissions
+        run: chmod +x gradlew
+
       - name: Build project
         run: ./gradlew build
 
