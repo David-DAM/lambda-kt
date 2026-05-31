@@ -32,7 +32,12 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.build {
+    dependsOn("lambdaZip")
+}
+
 tasks.register<Zip>("lambdaZip") {
+    description = "Generates a zip file containing the lambda function and its dependencies"
     from(tasks.jar)
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 

@@ -38,9 +38,9 @@ jobs:
 
       - name: Setup permissions
         run: chmod +x gradlew
-        
-      - name: Build project
-        run: ./gradlew build
+
+      - name: Build project and zip lambda
+        run: ./gradlew clean lambdaZip
 
       - name: CDK Bootstrap
         run: cdk bootstrap
