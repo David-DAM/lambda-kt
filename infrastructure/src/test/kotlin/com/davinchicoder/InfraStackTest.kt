@@ -2,75 +2,90 @@ package com.davinchicoder
 
 import org.junit.Test
 import software.amazon.awscdk.App
+import software.amazon.awscdk.StackProps
+import software.amazon.awscdk.assertions.Match
 import software.amazon.awscdk.assertions.Template
-import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+
 
 class InfraStackTest {
 
     @Test
-    fun `test initializeResources creates KMS key`() {
-        val resources = getResources()
-        val kmsKey = resources.values.find { (it as Map<*, *>)["Type"] == "AWS::KMS::Key" }
-        assertNotNull(kmsKey, "KMS Key should exist in the stack")
-    }
-
-    @Test
-    fun `test initializeResources creates SQS queue with DLQ configuration`() {
-        val resources = getResources()
-        val sqsQueue =
-            resources.values.find { (it as Map<*, *>)["Type"] == "AWS::SQS::Queue" && it["Properties"].let { props -> (props as Map<*, *>)["QueueName"] == "SqsQueue" } }
-        assertNotNull(sqsQueue, "SQS Queue should exist in the stack")
-
-        val dlq =
-            resources.values.find { (it as Map<*, *>)["Type"] == "AWS::SQS::Queue" && it["Properties"].let { props -> (props as Map<*, *>)["QueueName"] == "SqsDlq" } }
-        assertNotNull(dlq, "Dead Letter Queue should exist in the stack")
-    }
-
-    @Test
-    fun `test initializeResources creates Lambda function`() {
-
-        // Assert
-        val resources = getResources()
-        val lambdaFunction = resources.values.find { (it as Map<*, *>)["Type"] == "AWS::Lambda::Function" }
-        assertNotNull(lambdaFunction, "Lambda function should exist in the stack")
-
-        val lambdaProps = (lambdaFunction as Map<*, *>)["Properties"] as Map<*, *>
-        assertEquals("LambdaFunction", lambdaProps["FunctionName"], "Lambda function name should match")
-        assertEquals(1024, lambdaProps["MemorySize"], "Lambda memory size should match")
-    }
-
-    @Test
-    fun `test initializeResources creates Lambda role`() {
-        val resources = getResources()
-        val lambdaRole = resources.values.find { (it as Map<*, *>)["Type"] == "AWS::IAM::Role" }
-        assertNotNull(lambdaRole, "Lambda IAM Role should exist in the stack")
-    }
-
-    @Test
-    fun `test stack synthesizes successfully`() {
+    fun `test InfraStack initializes resources correctly`() {
         // Arrange
         val app = App()
-        val stack = InfraStack(app, "InfraStack")
 
         // Act
-        stack.initializeResources()
-        val synthesizedApp = app.synth()
+        val stack = InfraStack(app, "TestInfraStack", StackProps.builder().build())
+        val template = Template.fromStack(stack)
 
         // Assert
-        assertNotNull(synthesizedApp, "Application should synthesize successfully")
-        assertTrue(
-            synthesizedApp.stacks.isNotEmpty(),
-            "Synthesized application should contain at least one stack"
+        assertNotNull(stack, "InfraStack should be successfully created and initialized")
+
+        template.resourceCountIs("AWS::KMS::Key", 1)
+        template.resourceCountIs("AWS::IAM::Role", 1)
+        template.resourceCountIs("AWS::SQS::Queue", 2) // SQS Queue and DLQ
+        template.resourceCountIs("AWS::Lambda::Function", 1)
+    }
+
+    @Test
+    fun `test KMS Key has correct properties`() {
+        // Arrange
+        val app = App()
+        val stack = InfraStack(app, "TestInfraStack", StackProps.builder().build())
+        val template = Template.fromStack(stack)
+
+        // Act & Assert
+        template.hasResourceProperties(
+            "AWS::KMS::Key", mapOf(
+                "Description" to "key-description",
+                "EnableKeyRotation" to false
+            )
         )
     }
 
-    fun getResources(): Map<*, *> {
+    @Test
+    fun `test SQS Queue and DLQ are configured correctly`() {
+        // Arrange
         val app = App()
-        val stack = InfraStack(app, "InfraStack")
-        stack.initializeResources()
+        val stack = InfraStack(app, "TestInfraStack", StackProps.builder().build())
         val template = Template.fromStack(stack)
-        return template.toJSON()["Resources"] as Map<*, *>
+
+        // Act & Assert
+        template.hasResourceProperties(
+            "AWS::SQS::Queue", mapOf(
+                "QueueName" to "sqs-queue",
+                "DelaySeconds" to 10,
+                "RedrivePolicy" to mapOf(
+                    "maxReceiveCount" to 5,
+                    "deadLetterTargetArn" to Match.anyValue()
+                )
+            )
+        )
+
+        template.hasResourceProperties(
+            "AWS::SQS::Queue", mapOf(
+                "QueueName" to "sqs-dlq",
+                "DelaySeconds" to 10
+            )
+        )
+    }
+
+    @Test
+    fun `test Lambda Function is configured with proper IAM Role and SQS Queue`() {
+        // Arrange
+        val app = App()
+        val stack = InfraStack(app, "TestInfraStack", StackProps.builder().build())
+        val template = Template.fromStack(stack)
+
+        // Act & Assert
+        template.hasResourceProperties(
+            "AWS::Lambda::Function", mapOf(
+                "Handler" to Match.anyValue(),
+                "Runtime" to "java21",
+                "Role" to Match.anyValue(),
+                "Environment" to Match.anyValue()
+            )
+        )
     }
 }
