@@ -5,7 +5,7 @@ import software.amazon.awscdk.App
 fun main() {
     val app = App()
 
-    InfraStack(app, "InfraStack")
+    InfraStack(app, "InfraStack").initializeResources()
 
     app.synth()
 }
