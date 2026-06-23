@@ -18,8 +18,8 @@ class SqsInfra(val stack: Stack, val kmsKey: IKey, val lambdaRole: IRole) {
     fun initializeResources() {
         val sqsDlq = Queue.Builder.create(stack, "sqs-dlq")
             .queueName("sqs-dlq")
-            .deliveryDelay(Duration.seconds(10))
             .encryptionMasterKey(kmsKey)
+            .retentionPeriod(Duration.days(14))
             .fifo(false)
             .build()
 
@@ -34,6 +34,7 @@ class SqsInfra(val stack: Stack, val kmsKey: IKey, val lambdaRole: IRole) {
             .encryptionMasterKey(kmsKey)
             .deadLetterQueue(deadLetterQueue)
             .fifo(false)
+            .visibilityTimeout(Duration.seconds(30))
             .build()
 
         sqsQueue.grantConsumeMessages(lambdaRole)
