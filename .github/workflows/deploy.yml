@@ -39,11 +39,18 @@ jobs:
       - name: Setup permissions
         run: chmod +x gradlew
 
+      - name: Run Lambda tests and generate coverage report
+        run: ./gradlew test
+
       - name: Build project and zip lambda
         run: ./gradlew clean lambdaZip
 
       - name: Verify lambda zip generation
         run: ls -la build/libs/
+
+      - name: Run Infrastructure tests
+        run: ./gradlew test
+        working-directory: infrastructure
 
       - name: CDK Bootstrap
         run: cdk bootstrap

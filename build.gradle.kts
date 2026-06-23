@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.20"
+    jacoco
 }
 
 group = "com.davinchicoder"
@@ -28,12 +29,51 @@ kotlin {
     jvmToolchain(21)
 }
 
+jacoco {
+    toolVersion = "0.8.15"
+}
+
 tasks.test {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    classDirectories.setFrom(
+        files(
+            classDirectories.files.map {
+                fileTree(it) {
+                    exclude(
+                        "**/*Dto*",
+                        "**/*Request*",
+                        "**/*Response*"
+                    )
+                }
+            }
+        )
+    )
+
+    reports {
+        xml.required.set(true)
+        csv.required.set(false)
+        html.required.set(true)
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+    }
 }
 
 tasks.build {
-    dependsOn("lambdaZip")
+    dependsOn("lambdaZip", "jacocoTestCoverageVerification")
 }
 
 tasks.register<Zip>("lambdaZip") {
